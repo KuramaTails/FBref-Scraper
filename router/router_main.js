@@ -4,9 +4,9 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fetch = require('node-fetch');
-const date = new Date()
-let newDate = date.toISOString() .split("T")[0].replaceAll('-','');
-let url = 'https://site.api.espn.com/apis/site/v2/sports/soccer/scorepanel?lang=en&region=us&calendartype=ondays&limit=100&showAirings=true&dates='+newDate+'&tz=America/New_York'
+//const date = new Date()
+//let newDate = date.toISOString() .split("T")[0].replaceAll('-','');
+let url = 'https://site.api.espn.com/apis/site/v2/sports/soccer/scorepanel?lang=en&region=us&calendartype=ondays&limit=100&showAirings=true&dates=20221103&tz=America/New_York'
 let options = {method: 'GET'};
 
 var xlsx = require('xlsx');
