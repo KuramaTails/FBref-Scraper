@@ -9,9 +9,9 @@ let url = 'https://site.api.espn.com/apis/site/v2/sports/soccer/scorepanel?lang=
 let options = {method: 'GET'};
 
 var xlsx = require('xlsx');
-var df = xlsx.readFile(__dirname +  '../../dfs/df_sum.xlsx');
-var dfh = xlsx.readFile(__dirname + '../../dfs/df_home.xlsx');
-var dfa = xlsx.readFile(__dirname + '../../dfs/df_away.xlsx');
+var df = xlsx.readFile('./dfs/df_sum.xlsx');
+var dfh = xlsx.readFile('./dfs/df_home.xlsx');
+var dfa = xlsx.readFile('./dfs/df_away.xlsx');
 var fixtures = xlsx.utils.sheet_to_json(df.Sheets[df.SheetNames[0]])
 var start_empty = 0
 for (let row = 0; row < fixtures.length; row++) {
