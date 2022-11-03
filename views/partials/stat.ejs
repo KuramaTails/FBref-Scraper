@@ -1,0 +1,19 @@
+<div class="row text-center" >
+    <!--<div class="col stat__homeValue">
+        `+Math.round(h_team[columns[col]]*100)/100+`
+    </div>-->
+    <div class="col stat__categoryName">
+        `+columns[col]+`
+    </div>
+    <!--<div class="col stat__awayValue">
+        `+Math.round(a_team[columns[col]]*100)/100+`
+    </div>-->
+</div>
+<div class="row text-center" >
+    <div class="col progress justify-content-end p-0" style="background-color: rgb(100 100 100 / 50%);border-radius: 0px;">
+        <div class="progress-bar bg-danger" role="progressbar" style="width: `+h_team[columns[col]]*100/(h_team[columns[col]]+a_team[columns[col]])+`%;border-radius: 15px 0px 0px 15px;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">`+(h_team[columns[col]]!= 0 ? Math.round(h_team[columns[col]]*100)/100 : '')+`</div>
+    </div>
+    <div class="col progress justify-content-start p-0" style="background-color: rgb(100 100 100 / 50%);border-radius: 0px;">
+        <div class="progress-bar bg-white text-black" role="progressbar" style="width: `+ a_team[columns[col]]*100/(a_team[columns[col]]+h_team[columns[col]])+`%;border-radius: 0px 15px 15px 0px;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">`+(a_team[columns[col]]!= 0 ? Math.round(a_team[columns[col]]*100)/100 : '')+`</div>
+    </div>
+</div>

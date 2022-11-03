@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <%- include('../views/partials/head'); %>
+    </head>
+    <body class ="serieAprimary">
+        <%- include('../views/partials/navbar'); %>
+        <section class="container-fluid py-5 d-flex flex-column justify-content-center align-items-center" id="matches">
+        </section>
+    </body>
+</html>
+
+<script>
+$( document ).ready(function() {
+    const options = {
+            method: 'get',
+            url: '/loadnotes'
+        }
+
+    $.ajax(options)
+    .done(function(response, textStatus, xhr) {
+        if (xhr.status != 200) {
+            alert("Please enter correct user name and password.");
+        }
+        else{
+            round=1
+            const columns = Object.keys(response[0])
+            $('#round_nr').append(`
+                    Giornata `+response[0]['Giornata']
+            )
+            for (let i = 0; i < response.length; i+=2) {
+                h_team = response[i]
+                a_team = response[i+1]
+                $('#matches').append(`<%- include('../views/partials/match'); %>`);               
+            }
+        }
+    })
+    .fail(function(response, textStatus, xhr) {
+        alert("Please enter correct user name and password.");
+    })
+});
+</script>
+
+
+<script>
+    $(document).on('click', '.match', function(e){
+            var round = $('#round_nr')[0].innerText.split(' ')[1]
+            var id_match = $(this).index()
+            var nr_row = (((round*20)-20)+id_match*2)
+            if (nr_row) {
+                const options = {
+                method: 'post',
+                url: '/getstats',
+                data: {'id' :nr_row}
+            }
+    
+            $.ajax(options)
+            .done(function(response, textStatus, xhr) {
+                if (xhr.status != 200) {
+                    alert("Please retry.");
+                }
+                else{
+                    h_team = response[0]
+                    a_team = response[1]
+                    $('body').append(`<%- include('../views/partials/modal'); %>`);  
+                    let columns = Object.keys(response[0])
+                    for (let col = 0; col < columns.length; col++) {
+                        if (columns[col] == 'ID Partita' || columns[col] == 'Giornata' || columns[col] == 'Squadra' ) {
+                            continue
+                        }
+                        if (col<14) {
+                            $('#stats > .stat1').append(`<%- include('../views/partials/stat'); %>`);  
+                        }
+                        else {
+                            $('#stats > .stat2').append(`<%- include('../views/partials/stat'); %>`);  
+                        }
+                    }  
+                    $('#viewNote').modal('show');
+                    const myModalEl = document.getElementById('viewNote')
+                    myModalEl.addEventListener('hidden.bs.modal', event => {
+                        myModalEl.remove()
+                    })
+                }
+            })
+            .fail(function(response, textStatus, xhr) {
+                alert("Please retry.");
+            })
+            }
+        });
+</script>
+
+<script>
+    $(document).on('click', '#back, #next', function(e){
+        var id_match = $(this).parent().find('#round_nr')[0].innerText.split(' ')[1]
+        var url = '/'+$(this).attr('id')
+        if (id_match == 1) {
+            return
+        }
+        const options = {
+            method: 'post',
+            url: url,
+            data: {'Giornata' :id_match}
+        }
+        $.ajax(options)
+        .done(function(response, textStatus, xhr) {
+            if (xhr.status != 200) {
+                    alert("Please retry.");
+            }
+            else{
+                $('.match').remove()
+                $('#round_nr').text("Giornata "+response[0]['Giornata'])
+                round=1
+                const columns = Object.keys(response[0])
+                for (let i = 0; i < response.length; i+=2) {
+                    h_team = response[i]
+                    a_team = response[i+1]
+                    $('#matches').append(`<%- include('../views/partials/match'); %>`);                  
+                }
+            }
+        })
+        .fail(function(response, textStatus, xhr) {
+            alert("Please retry.");
+        })
+    })
+</script>

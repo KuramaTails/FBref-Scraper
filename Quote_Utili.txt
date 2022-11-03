@@ -1,0 +1,35 @@
+Esito Finale 1x2
+Doppia Chance
+Under/Over
+Goal/NoGoal
+Multigoal
+Casa: Under/Over
+Casa: Multigoal
+Ospite: Under/Over
+Ospite: Multigoal
+(1o tempo/2o tempo Multigoal)
+Under/Over Tiri in porta squadra Casa/ospite
+U/O tiri totali casa/ospite
+Combo 1x2+Goal/NoGoal
+Combo 1x2+Multigoal 6 esiti
+Combo U/O 1oTempo + U/O 2oTempo
+Combo Goal/NoGoal+U/O
+Combo Doppia chance + U/O
+Combo Doppia chance + Goal/NoGoal
+Combo DC + Multigoal
+1x2 Corner
+U/O Corner
+U/O Corner Casa/Ospite
+U/O Falli commessi
+U/O Falli commessi Casa/Ospite
+1x2 Falli commessi
+1x2 Cartellini Squadre
+U/O Tiri in porta
+1x2 Fuorigioco
+1x2 Tiri in porta
+1x2 Tiri Totali
+U/O Fuorigioco
+U/O Possesso palla squadra x
+U/O Tiri in porta squadra casa/ospite
+U/O Tiri totali
+U/O Tiri Totali casa/Ospite

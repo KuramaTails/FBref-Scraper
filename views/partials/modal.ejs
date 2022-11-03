@@ -1,0 +1,34 @@
+<div class="modal fade" id="viewNote" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <div class="w-100 p-3 summary-match">
+                    <div class="row">
+                        <div class="col text-center">
+                            <span class=fs-3>`+h_team.Squadra+`</span>
+                        </div>
+                        <div class="col-3 text-center">
+                            `+(h_team.Goals!= null ? "<span class=fs-3 p-3>"+Math.round(h_team.Goals*100)/100+"</span>" : " ")+`
+                                <span class=fs-3 p-3>-</span>
+                            `+(a_team.Goals!= null ? "<span class=fs-3 p-3>"+Math.round(a_team.Goals*100)/100+"</span>" : ' ')+`
+                        </div>
+                        <div class="col text-center">
+                            <span class=fs-3>`+a_team.Squadra+`</span>
+                        </div>
+                    </div>                                 
+                </div>
+            </div>
+            <div class="row modal-body" id="stats">
+                <div class="col stat1 p-3">
+
+                </div>
+                <div class="col stat2 p-3">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
