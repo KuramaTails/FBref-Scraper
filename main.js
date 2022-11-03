@@ -18,5 +18,5 @@ app.use('/back', indexRoutes);
 app.use('/next', indexRoutes);
 app.use('/getstats', indexRoutes);
 
-app.listen(3000,function(){ 
+app.listen(process.env.PORT || 3000,function(){ 
     console.log("Server listening on port: 3000")});
