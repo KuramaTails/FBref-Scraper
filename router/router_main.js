@@ -1,93 +1,75 @@
-'use strict';
-
 const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fetch = require('node-fetch');
-//const date = new Date()
-//let newDate = date.toISOString() .split("T")[0].replaceAll('-','');
-let url = 'https://site.api.espn.com/apis/site/v2/sports/soccer/scorepanel?lang=en&region=us&calendartype=ondays&limit=100&showAirings=true&dates=20221103&tz=America/New_York'
-let options = {method: 'GET'};
+const fs = require('fs');
 
-var xlsx = require('xlsx');
-var df = xlsx.readFile('./dfs/df_sum.xlsx');
-var dfh = xlsx.readFile('./dfs/df_home.xlsx');
-var dfa = xlsx.readFile('./dfs/df_away.xlsx');
-var fixtures = xlsx.utils.sheet_to_json(df.Sheets[df.SheetNames[0]])
-var start_empty = 0
-for (let row = 0; row < fixtures.length; row++) {
-    if (fixtures[row]['Goals'] == '' && fixtures[row]['Passaggi Totali'] == '') {
-        start_empty =row
-        break
-    }    
-}
-var home_stats = xlsx.utils.sheet_to_json(dfh.Sheets[dfh.SheetNames[0]])
-var away_stats = xlsx.utils.sheet_to_json(dfa.Sheets[dfa.SheetNames[0]])
+//https://webws.365scores.com/web/game/?langId=12&timezoneName=Europe/Rome&gameId=3581564
+//https://webws.365scores.com/web/games/?langId=12&timezoneId=4&competitors=293&aftergame=3581601&direction=1
+//https://webws.365scores.com/web/games/current/?langId=12&timezoneName=Europe/Rome&competitions=17
+//https://webws.365scores.com/web/games/results/?langId=12&timezoneName=Europe/Rome&competitions=17
+//https://webws.365scores.com/web/games/results/?langId=12&timezoneId=4&competitors=293
+let url = 'https://webws.365scores.com/web/games/results/?langId=12&timezoneName=Europe/Rome&competitions=17'
+let options = {method: 'GET'};
+let cache
+let nextPage
+let z = 1
 
 router.get('/', function(request, response) {
 	response.redirect('/notes')
 });
 
 router.get('/notes', function(request, response) {
-    fetch(url, options)
-    .then(res => res.json())
-    .then(json => {
-        let res = json.scores
-        if (res) {
-            res.forEach(league => {
-                if (league.leagues[0].name == 'Italian Serie A') {
-                    console.log(league)
-                }
-            });
-        }
-    })
-    .catch(err => console.error('error:' + err));
-    
     response.render(path.join(__dirname + '../../public/main.ejs'));
 });
 
-router.get('/loadnotes', function(request, response) {
-    let data = ''
-    if(request.query.giornata) {
-        let start_row = parseInt(request.query.giornata)
-        data = fixtures.slice(start_row,start_row+20);
+router.post('/back', function(request, response) {
+    z--
+    console.log(cache.length)
+    if (z<0) {
+        fetch("https://webws.365scores.com/"+nextPage, options)
+        .then(res => res.json())
+        .then(json => {
+            cache = json.games
+            json.games.slice(0,10)
+            response.send(json.games)
+        })
+        z=0
     }
     else {
-        data = fixtures.slice(start_empty-20,start_empty);
+        response.send(cache.slice(11,20))
     }
-	response.send(data)
-});
-
-router.post('/back', function(request, response) {
-    let start_row = 20*(parseInt(request.body.Giornata)-2)
-    response.redirect('/loadnotes?giornata='+start_row)
 });
 
 router.post('/next', function(request, response) {
-    let start_row = 20*(parseInt(request.body.Giornata))
-    response.redirect('/loadnotes?giornata='+start_row)
+    z++
+    if (z>1) {
+        fetch("https://webws.365scores.com/"+nextPage, options)
+        .then(res => res.json())
+        .then(json => {
+            cache = json.games
+            json.games.slice(0,10)
+            response.send(json.games)
+        })
+        z=0
+    }
+    else {
+        response.send(cache.slice(0,10))
+    }
 });
 
 
 router.post('/getstats', function(request, response) {
-    let start_row = parseInt(request.body.id)
-    let data = fixtures.slice(start_row,start_row+2);
-    if (data[0]['Goals'] == '' && data[0]['Passaggi Totali'] == '') {
-        var stats = []
-        home_stats.forEach(team => {
-            if (team.Squadra == data[0].Squadra) {
-                stats.push(team)
-            }
-        });
-        away_stats.forEach(team => {
-            if (team.Squadra == data[1].Squadra) {
-                stats.push(team)
-            }
-        });
-
-        return response.send(stats)
+    if (request.body.id) {
+        let id = request.body.id
+        let url = 'https://webws.365scores.com/web/game/?langId=12&timezoneName=Europe/Rome&gameId='+id
+        fetch(url, options)
+        .then(res => res.json())
+        .then(json => {
+            let game = json.game
+            response.send(game)
+        })
     }
-	response.send(data)
 });
 
 module.exports = router;

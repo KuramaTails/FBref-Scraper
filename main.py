@@ -31,12 +31,9 @@ tmain = driver.find_element(By.TAG_NAME,'table')
 rows = tmain.find_elements(By.XPATH,'//a[contains(text(), "Report partita")]')
 template_sum = {}
 index = 0
-print(fixtures.loc[110])
 for i in range(n_matches):
     index=index+1
-    print(i)
     infos = fixtures.loc[i]
-    print(infos)
     base_stats_new = {
         'ID Partita' : (int(index),int(index)),
         'Giornata' : (int(infos['Sett.']),int(infos['Sett.'])),
@@ -115,6 +112,7 @@ for i in range(n_matches):
                 a_value = elements_extra_stats[i+2].text
                 base_stats_new[title] = (int(h_value),int(a_value))
         driver.back()
+    print(base_stats_new)
     if len(template_sum) == 0:
             template_sum=base_stats_new
     else:
@@ -144,3 +142,16 @@ df_h.to_excel('df_home.xlsx', index=False)
 df_a.to_excel('df_away.xlsx', index=False)
 df.to_excel('df_sum_try.xlsx', index=False)
 driver.quit()
+
+'''
+giornata
+-partita
+--casa
+---nome
+---goal
+---stats
+--trasferta
+---nome
+---goal
+---stats
+'''

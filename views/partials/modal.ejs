@@ -5,15 +5,15 @@
                 <div class="w-100 p-3 summary-match">
                     <div class="row">
                         <div class="col text-center">
-                            <span class=fs-3>`+h_team.Squadra+`</span>
+                            <span class=fs-3>`+h_team.name+`</span>
                         </div>
                         <div class="col-3 text-center">
-                            `+(h_team.Goals!= null ? "<span class=fs-3 p-3>"+Math.round(h_team.Goals*100)/100+"</span>" : " ")+`
+                            `+(h_team.score!= null ? "<span class=fs-3 p-3>"+Math.round(h_team.score*100)/100+"</span>" : " ")+`
                                 <span class=fs-3 p-3>-</span>
-                            `+(a_team.Goals!= null ? "<span class=fs-3 p-3>"+Math.round(a_team.Goals*100)/100+"</span>" : ' ')+`
+                            `+(a_team.score!= null ? "<span class=fs-3 p-3>"+Math.round(a_team.score*100)/100+"</span>" : ' ')+`
                         </div>
                         <div class="col text-center">
-                            <span class=fs-3>`+a_team.Squadra+`</span>
+                            <span class=fs-3>`+a_team.name+`</span>
                         </div>
                     </div>                                 
                 </div>
