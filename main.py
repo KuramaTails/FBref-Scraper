@@ -142,5 +142,5 @@ df_h = home_df.groupby('Squadra',as_index=False).mean(numeric_only=True).drop(['
 df_a = away_df.groupby('Squadra',as_index=False).mean(numeric_only=True).drop(['ID Partita','Giornata'], axis=1)
 df_h.to_excel('df_home.xlsx', index=False)
 df_a.to_excel('df_away.xlsx', index=False)
-df.to_excel('df_sum_try.xlsx', index=False)
+df.to_excel('df_sum.xlsx', index=False)
 driver.quit()
