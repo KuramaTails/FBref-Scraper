@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fetch = require('node-fetch');
-const fs = require('fs');
 
 //https://webws.365scores.com/web/game/?langId=12&timezoneName=Europe/Rome&gameId=3581564
 //https://webws.365scores.com/web/games/?langId=12&timezoneId=4&competitors=293&aftergame=3581601&direction=1
@@ -14,6 +13,8 @@ let options = {method: 'GET'};
 let cache
 let nextPage
 let z = 1
+
+
 
 router.get('/', function(request, response) {
 	response.redirect('/notes')
@@ -71,5 +72,6 @@ router.post('/getstats', function(request, response) {
         })
     }
 });
+
 
 module.exports = router;

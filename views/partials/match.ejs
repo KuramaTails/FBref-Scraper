@@ -1,17 +1,22 @@
-<div class="row match serieAsecondary py-3 align-items-center justify-content-center" id="`+games[i].id+`">
-    <div class="col-2 logo d-flex justify-content-center">
+<div class="row match serieAsecondary align-items-center justify-content-center" id="`+ids[h_team.name].id+'-'+ids[a_team.name].id+`-17">
+    <div class="col-2 py-3 logo d-flex justify-content-center">
         <img src="/imgs/Serie_A/`+h_team.name+`.svg" class="img-fluid center-block px-3 h-100">
     </div>
-    <div class="col-2 d-flex justify-content-center align-items-center h-100">
+    <div class="col-2 py-3 d-flex justify-content-center align-items-center h-100">
         `+h_team.name+`
     </div>
-    <div class="col-2 d-flex justify-content-center align-items-center h-100">
-        `+h_team.score+' - '+a_team.score+`
+    <div class="col-4 d-flex flex-column align-items-center justify-content-center h-100">
+        <div class="row scoreboard fs-5">
+            `+status+`
+        </div>
+        <div class="row status fs-5">
+            `+status2+`
+        </div>
     </div>
-    <div class="col-2 d-flex justify-content-center align-items-center h-100">
+    <div class="col-2 py-3 d-flex justify-content-center align-items-center h-100">
         `+a_team.name+`
     </div>
-    <div class="col-2 logo d-flex justify-content-center" >
+    <div class="col-2 py-3 logo d-flex justify-content-center" >
         <img src="/imgs/Serie_A/`+a_team.name+`.svg" class="img-fluid center-block px-3 h-100" >
     </div>
 </div>

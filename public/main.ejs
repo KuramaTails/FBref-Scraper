@@ -11,48 +11,10 @@
 </html>
 
 <script>
-    let url = 'https://webws.365scores.com/web/games/fixtures/?langId=12&timezoneName=Europe/Rome&competitions=17'
-    //https://webws.365scores.com/web/games/results/?langId=12&timezoneId=4/Rome&userCountryId=-1&competitions=17&direction=1
-    
-    $( document ).ready(function() {
-        const options = {
-                method: 'get',
-                url: url
-            }
-        
-        window.res
-        window.first
-        window.last
-        fetch(url, options)
-        .then(response => response.json())
-        .then(json => {
-            let games = json.games
-            for (let i = 0; i < games.length; i++) {
-                if (i== 0) {
-                    first = games[i].id
-                }
-                if (i==games.length-1) {
-                    last = games[i].id
-                }
-                h_team = games[i].homeCompetitor
-                a_team = games[i].awayCompetitor
-                $('#matches').append(`<%- include('../views/partials/match'); %>`);
-            }
-            $('#round_nr').append(`Giornata `+games[0].roundNum)
-            res = json
-            let temp = Object.keys(res.paging)[0]
-            page = res.paging[temp]
-        })
-        .catch(err => console.log(err))
-               
-    });
-    </script>
-
-
-<script>
     $(document).on('click', '.match', function(e){
             var id_match = $(this).attr('id')
-            let url = "https://webws.365scores.com/web/game/?langId=12&timezoneName=Europe/Rome&gameId="+id_match
+            socket.emit("getStats", id_match);
+            /*let url = "https://webws.365scores.com/web/game/?langId=12&timezoneName=Europe/Rome&gameId="+id_match
             const options = {
                 method: 'get',
                 url: url
@@ -88,7 +50,7 @@
                         myModalEl.remove()
                     })
                 })
-                .catch(err => console.log(err))
+                .catch(err => console.log(err))*/
         });
 </script>
 
