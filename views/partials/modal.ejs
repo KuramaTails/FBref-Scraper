@@ -8,9 +8,7 @@
                             <span class=fs-3>`+h_team.name+`</span>
                         </div>
                         <div class="col-3 text-center">
-                            `+(h_team.score!= null ? "<span class=fs-3 p-3>"+Math.round(h_team.score*100)/100+"</span>" : " ")+`
-                                <span class=fs-3 p-3>-</span>
-                            `+(a_team.score!= null ? "<span class=fs-3 p-3>"+Math.round(a_team.score*100)/100+"</span>" : ' ')+`
+                            `+status.scoreStr+`
                         </div>
                         <div class="col text-center">
                             <span class=fs-3>`+a_team.name+`</span>
@@ -18,11 +16,8 @@
                     </div>                                 
                 </div>
             </div>
-            <div class="row modal-body" id="stats">
-                <div class="col stat1 p-3">
-
-                </div>
-                <div class="col stat2 p-3">
+            <div class="modal-body" id="stats">
+                <div class="stat p-3">
 
                 </div>
             </div>

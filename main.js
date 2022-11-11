@@ -4,14 +4,14 @@ const cookieParser = require("cookie-parser");
 const path = require('path');
 const indexRoutes = require('./router/router_main.js');
 const dotenv = require('dotenv');
-const updateCompetition = require('./fetch/updateCompetition.js');
+const updateMatches = require('./fetch/updateMatches.js');
 const { default: fetch } = require('node-fetch');
+const dbconnect = require('./db/dbconnect.js');
+const dbdisconnect = require('./db/dbdisconnect.js');
+const { default: mongoose } = require('mongoose');
+const matches_model = require('./models/matches_model.js');
+const newmatch_model = require('./models/newmatch_model.js');
 const app = express();
-
-
-var server = app.listen(3000);
-var io = require('socket.io')(server);
-
 
 dotenv.config()
 
@@ -269,82 +269,164 @@ let ids = {
     }
 }
 
-io.on('connection', async(socket) => {
-    console.log('a user connected');
-    let url = socket.handshake.headers.referer.split('/')
-    switch (url[url.length-1]) {
-        case 'notes':
-            //https://api.sofascore.com/api/v1/unique-tournament/17/season/41886/events/round/2
-            //https://webws.365scores.com/web/games/current/?langId=12&timezoneName=Europe/Rome&competitions=17
-            //https://www.fotmob.com/api/matches?timezone=Europe/Rome
+let matches
 
-            async function update() {
-                fetch('https://www.fotmob.com/api/leagues?id=55&timezone=Europe/Rome', {method: 'get'})
-                .then(response => response.json())
-                .then(round => {
-                    fetch('https://webws.365scores.com/web/games/current/?langId=12&timezoneName=Europe/Rome&competitions=17', {method: 'get'})
+async function fetchAll() {
+    //https://www.fotmob.com/api/teams?id=8634&timezone=Europe/Rome&ccode3=ITA
+    //https://www.fotmob.com/api/tltable?leagueId=55&timezone=Europe/Rome
+    /*await dbconnect();
+    console.log('Fetching played Matches in db')
+    const count_playedMatches = await newmatch_model.aggregate([{ $match: {'match.header.status.finished': true}}])
+    await dbdisconnect();
+    let url = 'https://www.fotmob.com/api/leagues?id=55&timezone=Europe/Rome'
+    fetch(url, {method: 'get'})
+        .then(response => response.json())
+        .then(async json => {
+            let matches = json.matches.data.allMatches
+            let first_unplayedMatch = json.matches.firstUnplayedMatch.firstUnplayedMatchIndex
+            if (count_playedMatches.length != first_unplayedMatch) {
+                console.log('Db matches are different from APIs matches')
+                await dbconnect();
+                for (let i = 0; i < matches.length; i++) {
+                    let id = matches[i].id
+                    let url = 'https://www.fotmob.com/api/matchDetails?matchId='+id+'&timezone=Europe/Rome'
+                    await fetch(url, {method: 'get'})
                     .then(response => response.json())
-                    .then(live_matches => {
-                        let live = {}
-                        let data = { round , ids , live}
-                        live_matches.games.forEach(match => {
-                            if (match.gameTimeDisplay != '') {
-                                data.live[String(match.homeCompetitor.id)+'-'+String(match.awayCompetitor.id)+'-17'] = match
-                            }
-                        });
-                        socket.emit("update", data);
+                    .then(async json => {
+                        let id_match = json.general.matchId
+                        let match = {content:json.content, general:json.general, header:json.header}
+                        await updateMatches.execute(id_match,match)
                     })
-                    .catch(err => console.log(err))
-                })
-                .catch(err => console.log(err))
+                    .catch(err => console.log(err));
+                }
+                await dbdisconnect();
             }
-            async function check() {
-                fetch('https://webws.365scores.com/web/games/current/?langId=12&timezoneName=Europe/Rome&competitions=17', {method: 'get'})
-                .then(response => response.json())
-                .then(json => {
-                    let live = {}
-                    json.games.forEach(match => {
-                        if (match.gameTimeDisplay != '') {
-                            live[String(match.homeCompetitor.id)+'-'+String(match.awayCompetitor.id)+'-17'] = match
-                        }
-                    });
-                    if (Object.keys(live).length>0) {
-                        socket.emit("check", live);
-                    }
-                })
-                .catch(err => console.log(err))
-            }
+        })
+        .catch(err => console.log(err))*/
 
-            await update()
-            setInterval(() => {
-                check()
-            }, 60*1000);
-            break;
-    }
+        await dbconnect();
+        let fixtures = await newmatch_model.find({})
+        await dbdisconnect();
+        //matches.find(x => x._id == '3919179')
+        //matches.slice(0,10)
 
-    socket.on("getStats", (match_id) => {
-                    //'https://www.fotmob.com/api/matchDetails?matchId='+match_id+'&timezone=Europe/Rome'
-                    let url = 'https://webws.365scores.com/web/game/?langId=12&timezoneName=Europe/Rome&matchupId='+match_id
-                    const options = {
-                        method: 'get',
-                        url: url
-                    }
-                    async function stats(url,options) {
-                        fetch(url, options)
+        var server = app.listen(3000);
+        var io = require('socket.io')(server);
+
+        console.log('Server started!')
+        io.on('connection', async(socket) => {
+            console.log('a user connected');
+            let url = socket.handshake.headers.referer.split('/')
+            switch (url[url.length-1]) {
+                case 'notes':
+                    if (!matches) {
+                        fetch('https://www.fotmob.com/api/leagues?id=55&timezone=Europe/Rome', {method: 'get'})
                         .then(response => response.json())
-                        .then(json => {
-                            socket.emit('stats',json)
+                        .then(async round => {
+                            matches = round
+                            socket.emit("update", {round,ids});
                         })
                         .catch(err => console.log(err))
+                    } else {
+                        round = matches
+                        socket.emit("update", {round,ids});
                     }
-                    stats(url,options)
-      });
+            }
+        
+            /*socket.on("getStats", async (match_id) => {
+                await fetch('https://www.fotmob.com/api/matchDetails?matchId='+match_id+'&timezone=Europe/Rome', {method: 'get'})
+                .then(response => response.json())
+                .then(async json => {
+                    if (json.header.status.reason) {
+                        socket.emit('stats',json)
+                    }
+                    else {
+                        let teams = { 'away' : {id:json.header.teams[0].id,matches:[],stats:{}}, 'home': {id:json.header.teams[1].id,matches:[],stats:{}}}
+                        for(let i = 0; i < Object.keys(teams).length; i++) {
+                            await fetch('https://www.fotmob.com/api/teams?id='+teams[Object.keys(teams)[i]].id+'&timezone=Europe/Rome&ccode3=ITA', {method: 'get'})
+                            .then(response => response.json())
+                            .then(teamjson => {
+                                let fixtures = teamjson.fixtures.allFixtures.fixtures
+                                fixtures.forEach(match => {
+                                    if (match.tournament.name == 'Serie A' && match.status.finished == true && match[Object.keys(teams)[i]].id == teams[Object.keys(teams)[i]].id ) {
+                                        teams[Object.keys(teams)[i]].matches.push(match.id)
+                                    }
+                                });
+                            })
+                            .catch(err => console.log(err))
+                        }
+                        for(let i = 0; i < Object.keys(teams).length; i++) {
+                            for(let x = 0; x < teams[Object.keys(teams)[i]].matches.length; x++) {
+                                await fetch('https://www.fotmob.com/api/matchDetails?matchId='+teams[Object.keys(teams)[i]].matches[x]+'&timezone=Europe/Rome', {method: 'get'})
+                                .then(response => response.json())
+                                .then(json => {
+                                    if (Object.keys(teams[Object.keys(teams)[i]].stats).length<1) {
+                                        teams[Object.keys(teams)[i]].stats = json.content.stats.stats
+                                    } else {
+                                        for (let y = 0; y < teams[Object.keys(teams)[i]].stats.length; y++) {
+                                            for (let z = 0; z < teams[Object.keys(teams)[i]].stats[y].stats.length; z++) {
+                                                if (json.content.stats.stats[y].stats) {
+                                                    if (json.content.stats.stats[y].stats[z]) {
+                                                        json.content.stats.stats[y].stats[z].stats.forEach(value => {
+                                                            teams[Object.keys(teams)[i]].stats[y].stats[z].stats.push(value)
+                                                        });
+                                                    }
+                                                }
+                                                else {
+                                                    teams[Object.keys(teams)[i]].stats[y].stats[z].stats.push(0,0)
+                                                }
+                                                if (x == teams[Object.keys(teams)[i]].matches.length-1) {
+                                                    const havg = []
+                                                    const aavg = []
+                                                    for (let index = 0; index < teams[Object.keys(teams)[i]].stats[y].stats[z].stats.length; index++) {
+                                                        
+                                                        if (index % 2 == 0) {
+                                                            havg.push(teams[Object.keys(teams)[i]].stats[y].stats[z].stats[index])
+                                                        } else {
+                                                            aavg.push(teams[Object.keys(teams)[i]].stats[y].stats[z].stats[index])
+                                                        }                                                        
+                                                    }
+                                                    const hsum = havg.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
+                                                    const h_avg = parseFloat(hsum / havg.length).toFixed(2) || 0;
+                                                    const asum = aavg.reduce((a, b) => parseFloat(a) + parseFloat(b), 0);
+                                                    const a_avg = parseFloat(asum / aavg.length).toFixed(2) || 0;
+                                                    teams[Object.keys(teams)[i]].stats[y].stats[z].stats = [h_avg,a_avg]
+                                                }
+                                            }                                            
+                                        }
+                                    }
+                                    
+                                })
+                                .catch(err => console.log(err))
+                            }
+                        }
+                        json.avgStats = teams
+                        socket.emit('stats',json)
+                    }
+                })
+                .catch(err => console.log(err))
+            });*/
+            socket.on("getStats", async (round) => {
+                const currentMatches = []
+                fixtures.filter(x=> x.match.get('general').matchRound == round? currentMatches.push(x) : '')
+                console.log(currentMatches)
+                socket.emit('returnStats',currentMatches)
+            })
+
+            socket.on('disconnect', () => {
+                console.log('user disconnected');
+            });
+          });
+}
 
 
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-      });
-  });
+fetchAll()
+
+
+
+
+
+
 
 /*
 updateCompetition.execute();
