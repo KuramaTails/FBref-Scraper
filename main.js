@@ -409,7 +409,6 @@ async function fetchAll() {
             socket.on("getStats", async (round) => {
                 const currentMatches = []
                 fixtures.filter(x=> x.match.get('general').matchRound == round? currentMatches.push(x) : '')
-                console.log(currentMatches)
                 socket.emit('returnStats',currentMatches)
             })
 
