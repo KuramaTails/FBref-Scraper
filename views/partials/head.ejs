@@ -10,77 +10,29 @@
 <script>
     let matches
     let currentPageStats
-    let ids 
-    socket.on("update", (data) => {
-        console.log(data)
-        let json = data.round
-        ids = data.ids
-        let main = json.matches
-        matches = main
-        let startRound = main.firstUnplayedMatch.firstRoundWithUnplayedMatch
-        let round = main.data.matchesCombinedByRound[startRound]
-        socket.emit('getStats',startRound)
-        if ($('.match').length==0) {
-            $('#round_nr').append(`Giornata `+startRound)
-            matchDays = Object.keys(round)
-            matchDays.forEach(day => {
-                for (let i = 0; i < round[day].length; i++) {
-                    if (i== 0) {
-                        first = round[day][i].id
-                    }
-                    if (i==round[day].length-1) {
-                        last = round[day][i].id
-                    }
-                    let h_team = round[day][i].home
-                    let a_team = round[day][i].away
-                    let status
-                    let status2
-                    if (round[day][i].status.reason) {
-                        status2 = round[day][i].status.scoreStr
-                        status = round[day][i].status.reason.long
-                    } else {
-                        status2 = round[day][i].status.startTimeStr
-                        status = round[day][i].status.startDateStr
-                    }
-                    $('#matches').append(`<%- include('./match'); %>`);
-                }
-            });
-            
-        }
-    });
 
-    socket.on("returnStats", async (currentMatches) => {
-        currentPageStats = currentMatches
-    })
-
-    socket.on("check", async (live) => {
-        $( document ).ready(function() {
-            var keys = Object.keys(live)
-            keys.forEach(match => {
-                if ($('#'+match)) {
-                    $('#'+match).find('.scoreboard').text(live[match].statusText+' '+live[match].gameTimeDisplay)
-                    $('#'+match).find('.status').text(live[match].homeCompetitor.score+'-'+live[match].awayCompetitor.score)
-                }
-            });
-        })  
-    });
-
-    socket.on("stats", (json) => {
-        if (json.avgStats) {
-
-        }
-        let status = json.header.status
-        let h_team = json.general.homeTeam
-        let a_team = json.general.awayTeam
-        $('body').append(`<%- include('./modal'); %>`);
-        let stats
-        if (status.reason) {
-            stats = json.content.stats.stats
-            
+    function addMatch(match) {
+        let h_team = match.home
+        let a_team = match.away
+        let status
+        let status2
+        if (match.status.reason) {
+            status2 = match.status.scoreStr
+            status = match.status.reason.long
         } else {
-            stats = json.avgStats['home'].stats
-            
+            status2 = match.status.startTimeStr
+            status = match.status.startDateStr
         }
+        $('#matches').append(`<%- include('./match'); %>`);
+    }
+
+    function createModal(match) {
+        console.log(match)
+        let status = match.header.status
+        let h_team = match.general.homeTeam
+        let a_team = match.general.awayTeam
+        $('body').append(`<%- include('./modal'); %>`);
+        let stats = status.reason? match.content.stats.stats : socket.emit('getAvgStats',match)
         for (let i = 0; i < stats.length; i++) {
                 let main_title = String(stats[i].title).replaceAll(/[^\w\s]/gi, '').replaceAll(' ','')
                 $('#stats > .stat').append(`<%- include('./catStats'); %>`); 
@@ -91,93 +43,46 @@
                     $('#stats > .stat' ).children().eq(i).append(`<%- include('./stat'); %>`); 
                 });
             }
-        $('#viewNote').modal('show');
-        const myModalEl = document.getElementById('viewNote')
-        myModalEl.addEventListener('hidden.bs.modal', event => {
-            myModalEl.remove()
-        })
+        $('#viewNote').modal('show').on('hidden.bs.modal',() => $('#viewNote').remove())
+    }
+
+    socket.on("update", (data) => {
+        let currRound = data.currRound
+        matches = data.matches
+        matches.filter(x => x.round == currRound? addMatch(x) : '' )
+        $('#round_nr').append(`Giornata `+currRound)
+        socket.emit('getStats',currRound)
+    });
+
+    socket.on("returnStats", async (currentMatches) => {
+        currentPageStats = currentMatches
     })
-
-</script>
-<script>
-    $(document).on('click', '.match', function(e){
+    
+    $(document).on('click', '.match',async function(e){
             var id_match = $(this).attr('id')
-            //socket.emit("getStats", id_match);
-            console.log(currentPageStats)
-            let json = currentPageStats.find(x=> x._id == id_match).match
-            console.log(json)
-            let status = json.header.status
-            let h_team = json.general.homeTeam
-            let a_team = json.general.awayTeam
-            $('body').append(`<%- include('./modal'); %>`);
-            let stats
-            if (status.reason) {
-                stats = json.content.stats.stats
-                
-            } else {
-                stats = json.avgStats['home'].stats
-                
+            let match = await currentPageStats.find(x=> x._id == id_match)
+            if (match) {
+                createModal(match.match)
             }
-            for (let i = 0; i < stats.length; i++) {
-                    let main_title = String(stats[i].title).replaceAll(/[^\w\s]/gi, '').replaceAll(' ','')
-                    $('#stats > .stat').append(`<%- include('./catStats'); %>`); 
-                    stats[i].stats.forEach(sub => {
-                        let title = sub.title
-                        let values = sub.stats
-                        if (!values[0]) return
-                        $('#stats > .stat' ).children().eq(i).append(`<%- include('./stat'); %>`); 
-                    });
-                }
-            $('#viewNote').modal('show');
-            const myModalEl = document.getElementById('viewNote')
-            myModalEl.addEventListener('hidden.bs.modal', event => {
-                myModalEl.remove()
-            })
+            
         });
-</script>
 
-<script>
     $(document).on('click', '#back, #next', function(e){
-        var nr_round = parseInt($(this).parent().find('#round_nr')[0].innerText.split(' ')[1])
+        var nr_round = parseInt($('#round_nr')[0].innerText.split(' ')[1])
         var btnAttr = $(this).attr('id')
-        if (btnAttr == 'back' && parseInt(nr_round)==1) {return}
-        if (btnAttr == 'next' && parseInt(nr_round)==38) {return}
+        switch (btnAttr) {
+            case 'back':
+                if (nr_round == 1) return
+                nr_round = nr_round-1
+                break;
+            case 'next':
+                if (nr_round == 38) return
+                nr_round = nr_round+1
+            break;
+        }
         $('.match').remove()
-        let round
-        let new_round
-        
-        if (btnAttr == 'back') {
-        round = matches.data.matchesCombinedByRound[nr_round-1]
-        new_round = nr_round-1
-        }
-        else {
-            round = matches.data.matchesCombinedByRound[nr_round+1]
-            new_round = nr_round+1
-        }
-        $('#round_nr').text("Giornata "+new_round)
-        socket.emit('getStats',new_round)
-        matchDays = Object.keys(round)
-        matchDays.forEach(day => {
-            for (let i = 0; i < round[day].length; i++) {
-                if (i== 0) {
-                    first = round[day][i].id
-                }
-                if (i==round[day].length-1) {
-                    last = round[day][i].id
-                }
-                let h_team = round[day][i].home
-                let a_team = round[day][i].away
-                let status
-                let status2
-                if (round[day][i].status.reason) {
-                    status2 = round[day][i].status.scoreStr
-                    status = round[day][i].status.reason.long
-                } else {
-                    status2 = round[day][i].status.startTimeStr
-                    status = round[day][i].status.startDateStr
-                }   
-                $('#matches').append(`<%- include('./match'); %>`);
-            }
-        });
+        matches.filter(x => x.round == nr_round? addMatch(x) : '' )
+        $('#round_nr').text("Giornata "+nr_round)
+        socket.emit('getStats',nr_round)
     })
 </script>
