@@ -25,10 +25,16 @@ app.use('/loadnotes', indexRoutes);
 app.use('/back', indexRoutes);
 app.use('/next', indexRoutes);
 app.use('/getstats', indexRoutes);
+const fs = require('fs');
+const updateMatches = require('./fetch/updateMatches.js');
+const createAvgsStats = require('./fetch/createAvgsStats.js');
+const avg_model = require('./models/avg_model.js');
+
 
 let matches
 let fixtures
 let competition
+let avgs
 async function retrieve_fixtures() {
     await fetch('https://www.fotmob.com/api/leagues?id=55&timezone=Europe/Rome', {method: 'get'})
     .then(response => response.json())
@@ -36,6 +42,7 @@ async function retrieve_fixtures() {
         await dbconnect()
         let dbLeague = await competition_model.find({_id:'55'})
         if (dbLeague[0].competition.get('matches').firstUnplayedMatch.firstUnplayedMatchIndex != league.matches.firstUnplayedMatch.firstUnplayedMatchIndex) {
+            let oldIndex = dbLeague[0].competition.get('matches').firstUnplayedMatch.firstUnplayedMatchIndex
             delete league.tabs
             delete league.details.faqJSONLD
             delete league.seostr
@@ -56,11 +63,27 @@ async function retrieve_fixtures() {
             })
             competition = league
             matches = league.matches.data.allMatches
+
+            for (let i = oldIndex; i < matches.length; i++) {
+                let id = matches[i].id
+                let url = 'https://www.fotmob.com/api/matchDetails?matchId='+id+'&timezone=Europe/Rome'
+                await fetch(url, {method: 'get'})
+                .then(response => response.json())
+                .then(async json => {
+                    let id_match = json.general.matchId
+                    let match = {content:json.content, general:json.general, header:json.header}
+                    await updateMatches.execute(id_match,match)
+                })
+                .catch(err => console.log(err));
+            }
+            await createAvgsStats.execute(matches)
         } else {
             competition = dbLeague[0].competition
-            matches = competition.get('matches').data.allMatches
+            matches = dbLeague[0].competition.get('matches').data.allMatches
+            fixtures = await newmatch_model.find({})
+            let avg_fetch = await avg_model.find({_id:'55'})
+            avgs = avg_fetch[0]
         }
-        fixtures = await newmatch_model.find({})
         await dbdisconnect();
     })
     .catch(err => console.log(err))
@@ -81,21 +104,18 @@ retrieve_fixtures().then(() => {
         }
 
         socket.on("getStats", async (round) => {
-            const currentMatches = []
-            fixtures.filter(x=> x.match.get('general').matchRound == round? currentMatches.push(x) : '')
-            socket.emit('returnStats',currentMatches)
+            const currentPageMatches = []
+            fixtures.filter(x=> x.match.get('general').matchRound == round? currentPageMatches.push(x) : '')
+            socket.emit('returnStats',currentPageMatches)
         })
         
-        /*socket.on("getAvgStats", async (id_match) => {
-            var match = fixtures.find(x=> x.match.get('general').matchId == id_match)
-            const hteam_matches = []
-            const ateam_matches = []
-            fixtures.filter(x=> 
-                x.match.get('general').homeTeam.id == match.match.get('general').homeTeam.id? hteam_matches.push(x) :
-                x.match.get('general').awayTeam.id == match.match.get('general').awayTeam.id? ateam_matches.push(x) : ''
-                )
-            console.log(hteam_matches)
-        })*/
+        socket.on("getAvgStats", async (match) => {
+            let h_team = {name:match.general.homeTeam.name}
+            let a_team = {name:match.general.awayTeam.name}
+            h_team['avg'] = avgs.stats[0][h_team.name]
+            a_team['avg'] = avgs.stats[1][a_team.name]
+            socket.emit('returnAvgStats',{match,h_team,a_team})
+        })
     
         socket.on('disconnect', () => {
             console.log('user disconnected');

@@ -10,7 +10,7 @@
 <script>
     let matches
     let currentPageStats
-
+    let avgStats
     function addMatch(match) {
         let h_team = match.home
         let a_team = match.away
@@ -27,7 +27,6 @@
     }
 
     function createModal(match) {
-        console.log(match)
         let status = match.header.status
         let h_team = match.general.homeTeam
         let a_team = match.general.awayTeam
@@ -46,6 +45,28 @@
         $('#viewNote').modal('show').on('hidden.bs.modal',() => $('#viewNote').remove())
     }
 
+    function createAvgsModal(data) {
+        console.log(data)
+        let status = data.match.header.status
+        let h_team = data.match.general.homeTeam
+        let a_team = data.match.general.awayTeam
+        $('body').append(`<%- include('./modal'); %>`);
+        let stats = [data.h_team.avg.stats,data.a_team.avg.stats]
+        
+        stats.forEach(main => {
+            main.forEach(maincat => {
+                let main_title = String(Object.keys(maincat)[0]).replaceAll(/[^\w\s]/gi, '').replaceAll(' ','')
+                if ($('#'+main_title ).length<1) $('#stats > .stat').append(`<%- include('./catStats'); %>`); 
+                Object.keys(maincat[Object.keys(maincat)[0]]).forEach(subcat => {
+                    let title = subcat
+                    let values = maincat[Object.keys(maincat)[0]][subcat]
+                    $('#'+main_title ).append(`<%- include('./stat'); %>`);
+                })
+            })
+        })
+        $('#viewNote').modal('show').on('hidden.bs.modal',() => $('#viewNote').remove())
+    }
+
     socket.on("update", (data) => {
         let currRound = data.currRound
         matches = data.matches
@@ -57,12 +78,18 @@
     socket.on("returnStats", async (currentMatches) => {
         currentPageStats = currentMatches
     })
+
+    socket.on("returnAvgStats", async (data) => {
+        createAvgsModal(data)
+    })
     
     $(document).on('click', '.match',async function(e){
             var id_match = $(this).attr('id')
-            let match = await currentPageStats.find(x=> x._id == id_match)
-            if (match) {
-                createModal(match.match)
+            let match = await currentPageStats.find(x=> x._id == id_match).match
+            if (match.header.status.reason) {
+                createModal(match)
+            } else {
+                socket.emit('getAvgStats',match)
             }
             
         });
